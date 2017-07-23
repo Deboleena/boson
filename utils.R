@@ -213,8 +213,8 @@ AWSConfigure = function (
 
 }
 # AWSConfigure(
-#   aws.access.key.id = 'AKIAJEN2QTXMCXUJII7A',
-#   aws.secret.access.key = '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'
+#   aws.access.key.id = '****',
+#   aws.secret.access.key = '****'
 # )
 
 ## Start: ECS utils ##
