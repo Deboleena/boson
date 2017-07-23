@@ -107,7 +107,7 @@ S3CreateBucket = function (bucket) {
     return('error')
   }
 }
-# print(S3CreateBucket(bucket = 's3://cm-tmp-3186876'))
+# print(S3CreateBucket(bucket = 's3://dm-tmp-3186876'))
 
 #' Delete a bucket in S3
 #' 
@@ -122,7 +122,7 @@ S3DeleteBucket = function (bucket) {
     return('error')
   }
 }
-# print(S3DeleteBucket(bucket = 's3://cm-tmp-3186876'))
+# print(S3DeleteBucket(bucket = 's3://dm-tmp-3186876'))
 
 # unit tests
 
