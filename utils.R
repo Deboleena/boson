@@ -1,4 +1,4 @@
-# Utility functions for RBOSON\
+# Utility functions for RBOSON
 
 
 ## Start: S3 utils ##
@@ -64,7 +64,7 @@ S3CopyFiles = function (source = NULL, destination, files) {
 # S3CopyFiles(destination = 's3://boson-base/rboson-test/', files = c('hello_world.R', 'rutils.R'))
 # S3CopyFiles(
 #   source = 's3://boson-base/rboson-test/',
-#   destination = '/Users/cmukherjee/Google_Drive/boson/tmp/',
+#   destination = '/Users/mdeboleena/Google_Drive/boson/tmp/',
 #   files = c('hello_world.R', 'rutils.R')
 # )
 
