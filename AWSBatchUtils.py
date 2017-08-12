@@ -30,7 +30,7 @@ def SubmitBatchJobs(
 	# print command
 	status, out = commands.getstatusoutput(command)
 
-
+# # run 5 tasks
 # print(SubmitBatchJobs(
 # 	batch_id = 1,
 # 	njobs = 4,
@@ -43,7 +43,7 @@ def SubmitBatchJobs(
 # 	job_definition = 'boson-batch-job', 
 # 	region = 'us-west-2'))
 
-
+# # bootstrap jobs
 # print(SubmitBatchJobs(
 # 	batch_id = 1,
 # 	njobs = 4,

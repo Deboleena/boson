@@ -1,0 +1,28 @@
+{
+  "computeEnvironmentName": "boson-5",
+  "type": "MANAGED",
+  "state": "ENABLED",
+  "computeResources": {
+    "type": "EC2",
+    "minvCpus": 2,
+    "maxvCpus": 4,
+    "desiredvCpus": 2,
+    "instanceTypes": [
+      "m4.large"
+    ],
+    "subnets": [
+      "subnet-1a69d77d",
+      "subnet-4da19315",
+      "subnet-abfc2ce2"
+    ],
+    "securityGroupIds": [
+      "sg-ddd562a7"
+    ],
+    "ec2KeyPair": "mdeboleena_mukherjeechiranjit",
+    "instanceRole": "ecsInstanceRole",
+    "tags": {
+      "Name": "Batch Instance - Boson"
+    }
+  },
+  "serviceRole": "arn:aws:iam::757968107665:role/BosonBatch"
+}

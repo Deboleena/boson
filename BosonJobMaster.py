@@ -66,7 +66,7 @@ elif (job_type == 'run-py-tasks'):
 	out = {}
 
 	for i in task_ids :
-		print '** Starting job{} **\n'.format(i)
+		print '** Starting task{} **\n'.format(i)
 		try:
 			all_args = dict(X[i], **extra_args)
 			out[str(i)] = FUN(**all_args)

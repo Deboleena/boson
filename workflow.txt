@@ -1,0 +1,83 @@
+# workflow
+
+[Step 1: Autheticate]
+aws configure
+
+[Step 2: Spin up a compute environment - change the keypair in batch_test.json]
+aws batch create-compute-environment --cli-input-json file://batch_test.json
+
+[Step 3: Create a job queue]
+aws batch create-job-queue --job-queue-name boson-job-queue --state ENABLED --priority 1 --compute-environment-order order=1,computeEnvironment=boson-4
+
+[Step 4: Register a job-definition]
+aws batch register-job-definition --job-definition-name boson-batch-job --type container --container-properties '{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": 1, "memory": 128}'
+
+[Step 5: Upload inputs]
+[[R>]]
+source('s3utils.R')
+source('AWSBatchUtils.R')
+
+BosonJob = function (x, q) {
+  return ( quantile (x, probs = q) )
+}
+BosonParams = list()
+for (i in 1:101) { BosonParams[[i]] = list(q = (i-1) / 100) }
+x = rnorm (10000, 0, 1)
+
+# upload metadata
+batch.id = 0
+njobs = 5
+s3.path = 's3://boson-base/rboson-test/'
+SaveObjectesInS3(
+  FUN = BosonJob, X = BosonParams, extra.args = list(x = x),
+  s3.path = s3.path,
+  key = paste0('batch_', batch.id, '_in')
+)
+
+[Step 6: submit a bathc job]
+[[sh$]]
+aws batch submit-job --job-name boson-job --job-queue boson-job-queue --job-definition boson-batch-job --container-overrides '{"command":["sh","driver.sh","us-west-2","1","bootstrap-r-jobs","4","0","0","s3://boson-base/rboson-test/"]}'
+
+[[R>]]
+SubmitBatchJobs(batch.id = batch.id, njobs = njobs, s3.path = s3.path)
+
+[Step 4: Register and run tasks]
+aws ecs register-task-definition --family boson-task --task-role-arn arn:aws:iam::757968107665:role/ECS-task-full-access --container-definitions name=boson-container,image=757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest,memory=200,command="sh","driver.sh","s3://boson-base/rboson-base/boson_rjob_0.rdata","boson_rjob_0.rdata","s3://boson-base/tmp/"
+
+aws ecs run-task --cluster boson-cluster --task-definition boson-task:35 --count 2
+
+
+[Step: Destroy cluster]
+ecs-cli down --force
+
+----------------------------------------------------------------------------------------------------------------------
+# building
+
+[Step 1: Create Docker image]
+docker build -t boson-docker-image .
+# test it
+docker run boson-docker-image ls
+
+[Step 2: Login to AWS Docker registry and push image]
+docker tag boson-docker-image:latest 757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest && aws ecr get-login --no-include-email --region us-west-2 | sh && docker push 757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest
+
+[Together]
+docker build -t boson-docker-image . && docker tag boson-docker-image:latest 757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest && aws ecr get-login --no-include-email --region us-west-2 | sh && docker push 757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest
+
+----------------------------------------------------------------------------------------------------------------------
+# debugging
+
+[SSH to EC2 container]
+cd ~
+ssh -i "chiranjit.pem" ec2-user@ec2-54-71-39-169.us-west-2.compute.amazonaws.com
+
+[List docker images]
+docker images
+
+[List last 5 Docker processes]
+docker ps -n 5
+
+[Check logs for a Docker process]
+docker logs <container-id>
+
+----------------------------------------------------------------------------------------------------------------------

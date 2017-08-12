@@ -1,0 +1,40 @@
+http://docs.aws.amazon.com/batch/latest/userguide/get-set-up-for-aws-batch.html
+
+Goldmine: https://aws.amazon.com/blogs/compute/creating-a-simple-fetch-and-run-aws-batch-job/
+
+
+[ create-compute-environment / update-compute-environment / delete-compute-environment ]
+
+aws batch create-compute-environment --cli-input-json file://batch_test.json
+
+aws batch update-compute-environment --compute-environment boson-4 --state DISABLED
+
+aws batch delete-compute-environment --compute-environment boson-4
+
+
+[ register-job-definition / deregister-job-definition ]
+
+aws batch register-job-definition --job-definition-name boson-batch-job --type container --container-properties '{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": 1, "memory": 128, "command": ["sh","driver.sh","--bootstrap-jobs","2","s3://boson-base/rboson-base/boson_rjob_0.rdata","boson_rjob_0.rdata","s3://boson-base/tmp/"]}'
+
+aws batch register-job-definition --job-definition-name boson-batch-job --type container --container-properties '{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": 1, "memory": 2048}'
+
+aws batch deregister-job-definition --job-definition boson-batch-job
+
+[ create-job-queue / update-job-queue / delete-job-queue ]
+
+aws batch create-job-queue --job-queue-name boson-job-queue --state ENABLED --priority 1 --compute-environment-order order=1,computeEnvironment=boson-5
+
+aws batch update-job-queue --job-queue boson-job-queue --state DISABLED && aws batch delete-job-queue --job-queue boson-job-queue
+
+# submit-job
+
+aws batch submit-job --job-name boson-job --job-queue boson-job-queue --job-definition boson-batch-job
+
+aws batch submit-job --job-name boson-job --job-queue boson-job-queue --job-definition boson-batch-job --container-overrides '{"command":["sh","driver.sh","us-west-2","--bootstrap-jobs","5","s3://boson-base/rboson-base/boson_rjob_0.rdata","boson_rjob_0.rdata","s3://boson-base/tmp/"]}'
+
+aws batch submit-job --job-name boson-job --job-queue boson-job-queue --job-definition boson-batch-job --container-overrides '{"command":["sh","driver.sh","us-west-2","--bootstrap-jobs","5","0","s3://boson-base/rboson-test/"]}'
+
+
+# list-jobs
+
+aws batch list-jobs --job-queue boson-job-queue

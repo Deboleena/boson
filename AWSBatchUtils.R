@@ -1,17 +1,17 @@
 # AWSBatchUtils.R
-# run: Rscript AWSBatchUtils.R
+# run: R --no-save < AWSBatchUtils.R
 
 require(jsonlite)
 
 SubmitBatchJobs = function (
   batch.id,
-  job.type = 'bootstrap-r-jobs',
   njobs,
-  job.id = '0',
-  task.ids = '0',
   s3.path,
+  job.type = 'bootstrap-r-jobs',
+  job.id = 0,
+  task.ids = '0',
   job.name = 'boson-job',
-  job.queue = 'boson-job-queue2',
+  job.queue = 'boson-job-queue',
   job.definition = 'boson-batch-job',
   region = 'us-west-2'
 ) {
@@ -39,7 +39,31 @@ SubmitBatchJobs = function (
   
   return(job.id)
 }
-# print(SubmitBatchJobs(batch.id = 0, njobs = 1, s3.path = 's3://boson-base/rboson-test/'))
+# run 5 tasks
+# print(SubmitBatchJobs(
+#   batch.id = 0,
+#   njobs = 5,
+#   s3.path = "s3://boson-base/rboson-test/", 
+#   job.type = "run-r-tasks", 
+#   job.id = '0',
+#   task.ids = '1,2,3,4,5',
+#   job.name = 'boson-job', 
+#   job.queue = 'boson-job-queue', 
+#   job.definition = 'boson-batch-job', 
+#   region = 'us-west-2'))
+
+# # bootstrap jobs
+# print(SubmitBatchJobs(
+#   batch.id = 0,
+#   njobs = 4,
+#   s3.path = "s3://boson-base/rboson-test/", 
+#   job.type = "bootstrap-r-jobs", 
+#   job.id = '0',
+#   task.ids = '0',
+#   job.name = 'boson-job', 
+#   job.queue = 'boson-job-queue', 
+#   job.definition = 'boson-batch-job', 
+#   region = 'us-west-2'))
 
 
 MonitorJobStatus = function (job.ids) {
