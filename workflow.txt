@@ -7,10 +7,10 @@ aws configure
 aws batch create-compute-environment --cli-input-json file://batch_test.json
 
 [Step 3: Create a job queue]
-aws batch create-job-queue --job-queue-name boson-job-queue --state ENABLED --priority 1 --compute-environment-order order=1,computeEnvironment=boson-4
+aws batch create-job-queue --job-queue-name boson-job-queue --state ENABLED --priority 1 --compute-environment-order order=1,computeEnvironment=boson-5
 
 [Step 4: Register a job-definition]
-aws batch register-job-definition --job-definition-name boson-batch-job --type container --container-properties '{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": 1, "memory": 128}'
+aws batch register-job-definition --job-definition-name boson-batch-job --type container --container-properties '{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": 1, "memory": 2048}'
 
 [Step 5: Upload inputs]
 [[R>]]

@@ -1,6 +1,6 @@
 FROM garland/aws-cli-docker:latest
 
-MAINTAINER Chiranjit Mukherjee mukherjeechiranjit@gmail.com
+MAINTAINER Deboleena Mukhpadhyay
 
 WORKDIR /
 # ENV HOME /
