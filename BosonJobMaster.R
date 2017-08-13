@@ -73,6 +73,9 @@ if (job.type == 'bootstrap-r-jobs') {
   
   # run assigned jobs
   out = list()
+  if (!exists('extra.args')) {
+    extra.args = list()
+  }
   
   for (i in task.ids) {
     cat(paste('** Starting job', i, '**\n'))
