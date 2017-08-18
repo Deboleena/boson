@@ -1,10 +1,10 @@
 FROM garland/aws-cli-docker:latest
 
-MAINTAINER Deboleena Mukhpadhyay
+MAINTAINER Deboleena Mukhopadhyay m.deboleena@gmail.com
 
 WORKDIR /
-# ENV HOME /
 
+# install some compilers
 RUN apk add --update alpine-sdk
 
 # install R
@@ -20,23 +20,24 @@ RUN apk update \
     /var/cache/apk/R-doc-3.2.3-r0.apk \
   && rm -fr /var/cache/apk/*
 
+# install some R packages
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile
 RUN Rscript -e "install.packages('jsonlite')"
 
+# install some Python packages
 RUN pip install --upgrade pip
 RUN pip install dill
+#RUN apk add --no-cache --virtual=build_dependencies musl-dev gcc python-dev make cmake g++ gfortran && \
+#    ln -s /usr/include/locale.h /usr/include/xlocale.h && \
+#    pip install numpy && \
+#    pip install pandas==0.18.1 && \
+#    apk del build_dependencies && \
+#    apk add --no-cache libstdc++ && \
+#    rm -rf /var/cache/apk/*
+#RUN pip install setuptools scipy
 
-# install numpy pandas
-RUN apk add --no-cache --virtual=build_dependencies musl-dev gcc python-dev make cmake g++ gfortran && \
-    ln -s /usr/include/locale.h /usr/include/xlocale.h && \
-    pip install numpy && \
-    pip install pandas==0.18.1 && \
-    apk del build_dependencies && \
-    apk add --no-cache libstdc++ && \
-    rm -rf /var/cache/apk/*
 
-
-# add useful files
+# add Boson scripts
 ADD driver.sh /
 ADD s3utils.R /
 ADD s3utils.py /

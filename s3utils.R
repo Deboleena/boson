@@ -1,4 +1,5 @@
 # S3 Utility functions for RBOSON
+# run: Rscript s3utils.R
 
 #' Create a folder in S3
 #' 
@@ -47,7 +48,7 @@ S3ListFiles = function (s3path, sanitize = TRUE) {
 #' @param source path to source directory (local / S3)
 #' @param destination path to destination diectory (local / S3)
 #' @param files list of files to be copied as a character vector
-S3CopyFiles = function (source = NULL, destination, files) {
+S3CopyFiles = function (source = NULL, destination, files, supressWarnings = FALSE) {
   # append source path
   if (! is.null(source)) {
     files = paste0(source, files)
@@ -55,7 +56,7 @@ S3CopyFiles = function (source = NULL, destination, files) {
   
   for (f in files) {
     # make an 'aws s3 cp' call
-    system2('aws', c('s3', 'cp', f, destination))
+    system2('aws', c('s3', 'cp', f, destination), stderr = supressWarnings)
   }
 }
 # S3CopyFiles(destination = 's3://boson-base/rboson-test/', files = c('hello_world.R', 'rutils.R'))
@@ -136,26 +137,32 @@ SaveObjectesInS3 = function (..., s3.path, key) {
 # SaveObjectesInS3(a = rnorm(100), s3.path = 's3://boson-base/rboson-test/', key = 'rnorm')
 
 
-LoadObjectsFromS3 = function (s3.path, keys) {
+LoadObjectsFromS3 = function (s3.path, keys, supressWarnings = FALSE) {
   out.all = list()
   tmp.env = new.env()
   
   for (k in keys) {
     file.name = paste0(k, '.rdata')
     
-    S3CopyFiles(source = s3.path, destination = './', files = file.name)
-    load(file.name, envir = tmp.env); robjs = get('robjs', envir = tmp.env)
-    
+    tryCatch({
+      S3CopyFiles(source = s3.path, destination = './', files = file.name, supressWarnings = supressWarnings)
+      load(file.name, envir = tmp.env); robjs = get('robjs', envir = tmp.env)
+    }, error = function(e) {
+      robjs = NULL
+    })
+
     if (length(robjs) == 0) { next }
     for (i in 1:length(robjs)) {
-      out.all[[length(out.all) + 1]] = robjs[[i]]
-      names(out.all)[length(out.all)] = names(robjs)[i]
+        out.all[[length(out.all) + 1]] = robjs[[i]]
+        names(out.all)[length(out.all)] = names(robjs)[i]
     }
     
     file.remove(file.name)
     rm(envir = tmp.env)
+
   }
   
   return(out.all)
 }
-# print(LoadObjectsFromS3(s3.path = 's3://boson-base/rboson-test/', keys = c('rnorm')))
+# print(LoadObjectsFromS3(s3.path = 's3://boson-base/batch_0/', keys = c('batch_0_jobids')))
+

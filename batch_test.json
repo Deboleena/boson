@@ -4,9 +4,9 @@
   "state": "ENABLED",
   "computeResources": {
     "type": "EC2",
-    "minvCpus": 10,
-    "maxvCpus": 10,
-    "desiredvCpus": 10,
+    "minvCpus": 2,
+    "maxvCpus": 2,
+    "desiredvCpus": 2,
     "instanceTypes": [
       "m4.large"
     ],

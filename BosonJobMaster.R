@@ -31,45 +31,24 @@ meta = LoadObjectsFromS3(
 list2env(meta, envir = environment())
 
 if (job.type == 'bootstrap-r-jobs') {
-  ## bootstrap r-jobs ##
   
-  num.tasks = length(X)
-  if (num.tasks == 1) {
-    task.partitions = list(`1` = c(1))
-  } else {
-    task.partitions = split(1:num.tasks, cut(seq_along(1:num.tasks), njobs, labels = FALSE))
-  }
-  
-  out = data.frame(task.ids = character(0), job.id = character(0))
-  job.idx = 0
-  for (t in task.partitions) {
-    job.idx = job.idx + 1
-    task.ids = paste(t, collapse = ',')
-    print(paste('Submitting tasks:', task.ids))
-    out = rbind(out,
-      data.frame(
-        task.ids = task.ids,
-        job.id = SubmitBatchJobs(
-          batch.id = batch.id,
-          job.type = 'run-r-tasks',
-          njobs = 1,
-          job.id = as.character(job.idx),
-          task.ids = task.ids,
-          s3.path = s3.path
-        )
-      )
-    )
-  }
+  # bootstrap jobs in the batch
+  df.jobid = BootstrapBatchJobs (
+    batch.id = batch.id,
+    ntasks = length(X),
+    njobs = njobs,
+    s3.path = s3.path
+  )
+  print(df.jobid)
   
   # save outcome in S3
   SaveObjectesInS3(
-    out = out,
+    out = list(df.jobid = df.jobid),
     s3.path = s3.path,
     key = c(paste0('batch_', batch.id, '_jobids'))
   )
   
 } else if (job.type == 'run-r-tasks') {
-  ## run r-jobs ##
   
   # run assigned jobs
   out = list()
