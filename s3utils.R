@@ -147,6 +147,7 @@ LoadObjectsFromS3 = function (s3.path, keys, supressWarnings = FALSE) {
     tryCatch({
       S3CopyFiles(source = s3.path, destination = './', files = file.name, supressWarnings = supressWarnings)
       load(file.name, envir = tmp.env); robjs = get('robjs', envir = tmp.env)
+      file.remove(file.name)
     }, error = function(e) {
       robjs = NULL
     })
@@ -156,8 +157,6 @@ LoadObjectsFromS3 = function (s3.path, keys, supressWarnings = FALSE) {
         out.all[[length(out.all) + 1]] = robjs[[i]]
         names(out.all)[length(out.all)] = names(robjs)[i]
     }
-    
-    file.remove(file.name)
     rm(envir = tmp.env)
 
   }

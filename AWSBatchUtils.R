@@ -139,27 +139,137 @@ MonitorJobStatus = function (job.ids, print.job.status = c('summary', 'detailed'
 # print(MonitorJobStatus(c('ee10c476-2bfe-4ae6-bdad-f54146ba84fc', 'a45c7e5f-91c1-487c-9a6d-0d1d6ab313c6'), print.job.status = 'none'))
 
 
-WaitForJobsToFinish = function (job.ids, ping = 10, print.job.status = c('summary', 'detailed', 'none')) {
-  df.monitor = MonitorJobStatus(job.ids, print.job.status = print.job.status)
-  while (!all(df.monitor$status %in% c('SUCCEEDED', 'FAILED'))) {
-    Sys.sleep(ping)
-    df.monitor = MonitorJobStatus(job.ids, print.job.status = print.job.status)
-  }
+CreateBatchComputeEnvironment = function (
+  comp.env.name = 'boson-batch',
+  instance.types = c("m4.large"),
+  min.vcpus = 0,
+  max.vcpus = 2,
+  initial.vcpus = 2,
+  service.role.arn,
+  subnets,
+  security.group.ids
+) {
+  system2('aws', c(
+    'batch', 'create-compute-environment',
+    '--compute-environment-name', comp.env.name,
+    '--type', 'MANAGED',
+    '--state', 'ENABLED',
+    '--compute-resources', paste0(
+      'type="EC2"',
+      ',minvCpus=', min.vcpus,
+      ',maxvCpus=', max.vcpus,
+      ',desiredvCpus=', initial.vcpus,
+      ',instanceTypes=', paste(instance.types,collapse = ','),
+      ',subnets=', paste0(subnets, collapse = ','),
+      ',securityGroupIds=', paste0(security.group.ids, collapse = ','),
+      ',instanceRole="ecsInstanceRole"'
+      ),
+    '--service-role', service.role.arn
+    )
+  )
 }
+# CreateBatchComputeEnvironment (
+#   service.role.arn = "arn:aws:iam::757968107665:role/BosonBatch",
+#   subnets = c("subnet-1a69d77d","subnet-4da19315","subnet-abfc2ce2"),
+#   security.group.ids = "sg-ddd562a7"
+# )
 
 
-FetchBatchOutcomes = function (batch.id, s3.bucket, s3.path = NULL) {
-  if (is.null(s3.path)) {
-    if (substr(s3.bucket, nchar(s3.bucket), nchar(s3.bucket)) == '/') {
-      s3.bucket = substr(s3.bucket, 1, nchar(s3.bucket) - 1)
-    }
-    s3.path = paste0(s3.bucket, '/batch_', batch.id, '/')
-  }
-
-  out.all = LoadObjectsFromS3(
-    s3.path = s3.path, 
-    keys = paste0('batch_', batch.id, '_out_', 1:njobs)
+DeleteBatchComputeEnvironment = function (
+  comp.env.name = 'boson-comp-env'
+) {
+  # disable
+  system2('aws', c(
+    'batch', 'update-compute-environment',
+    '--compute-environment', comp.env.name,
+    '--state', 'DISABLED'
+    )
   )
 
-  retunr(out.all)
+  # wait 10 seconds
+  Sys.sleep(10)
+
+  # delete
+  system2('aws', c(
+    'batch', 'delete-compute-environment',
+    '--compute-environment', comp.env.name
+    )
+  )
 }
+# DeleteBatchComputeEnvironment()
+
+
+CreateJobQueue = function (
+  job.queue.name = 'boson-job-queue',
+  comp.env.name = 'boson-comp-env'
+) {
+  system2('aws', c(
+    'batch', 'create-job-queue',
+    '--job-queue-name', job.queue.name,
+    '--state', 'ENABLED',
+    '--priority', '1',
+    '--compute-environment-order', paste0('order=1,computeEnvironment=',comp.env.name)
+    )
+  )
+}
+# CreateJobQueue()
+
+
+DeleteJobQueue = function (
+  job.queue.name = 'boson-job-queue'
+) {
+  # disable
+  system2('aws', c(
+    'batch', 'update-job-queue',
+    '--job-queue', job.queue.name,
+    '--state', 'DISABLED'
+    )
+  )
+
+  # wait 10 seconds
+  Sys.sleep(10)
+
+  # delete
+  system2('aws', c(
+    'batch', 'delete-job-queue',
+    '--job-queue', job.queue.name
+    )
+  )
+}
+# DeleteJobQueue()
+
+
+RegisterBosonbJobDefinition = function (
+  job.definition.name = 'boson-job-definition',
+  vcpus = 1,
+  memory = 1024
+) {
+  system2('aws', c(
+    'batch', 'register-job-definition',
+    '--job-definition-name', job.definition.name,
+    '--type','container',
+    '--container-properties', paste0(
+        '\'{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": ', vcpus,', "memory": ', memory,'}\''
+      )
+    )
+  )
+}
+# RegisterBosonbJobDefinition()
+
+
+DeregisterBosonbJobDefinition = function (
+  job.definition.name = 'boson-job-definition',
+  revision.id = 1
+) {
+  system2('aws', c(
+    'batch', 'deregister-job-definition',
+    '--job-definition', paste0(job.definition.name, ':', revision.id)
+    )
+  )
+}
+# DeregisterBosonbJobDefinition(revision.id = 1)
+
+# DeleteBatchLogs = function () {
+#   system2('aws', c('logs', 'delete-log-group', '--log-group-name', '/aws/batch/job'))
+# }
+# DeleteBatchLogs()

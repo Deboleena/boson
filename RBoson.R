@@ -6,6 +6,29 @@ source('s3utils.R')
 source('AWSBatchUtils.R')
 
 
+BosonSetup = function (
+	comp.env.name = 'boson-comp-env',
+	instance.types = c("m4.large"),
+	min.vcpus = 0,
+	max.vcpus = 2,
+	initial.vcpus = 2,
+	service.role.arn,
+	subnets,
+	security.group.ids,
+	job.queue.name = 'boson-job-queue',
+	job.definition.name = 'boson-job-definition',
+	vcpus = 1,
+  	memory = 1024
+) {
+	# create a compute-environment for Boson
+
+	# create a job queue for Boson
+
+	# register a job-definition for Boson
+
+}
+
+
 SubmitBosonTasks = function (
 	X,
 	FUN,
@@ -101,7 +124,7 @@ SubmitBosonTasks = function (
 
 	# wait for jobs to finish if this call is blocking
 	if (blocking.call) {
-		WaitForJobsToFinish(df.jobid$job.id, print.job.status = print.job.status)
+		WaitForJobsToFinish(df.jobid$job.id, ping = ping, print.job.status = print.job.status)
 		return ( FetchBatchOutcomes (batch.id, njobs, s3.bucket, s3.path) )
 	} else {
 		return ( df.jobid )
@@ -143,6 +166,30 @@ FetchBatchOutcomes = function (batch.id, njobs, s3.bucket, s3.path = NULL) {
 # 		s3.bucket = 's3://boson-base/'
 # 	)
 # )
+
+
+BatchCleanup = function (batch.id, s3.bucket, s3.path = NULL) {
+	if (is.null(s3.path)) {
+		if (substr(s3.bucket, nchar(s3.bucket), nchar(s3.bucket)) == '/') {
+			s3.bucket = substr(s3.bucket, 1, nchar(s3.bucket) - 1)
+		}
+		s3.path = paste0(s3.bucket, '/batch_', batch.id, '/')
+	}
+	S3DeleteFolder(s3.path)
+}
+
+
+BosonClenaup = function (
+) {
+	# deregister Boson job definitions
+
+	# deactivate and delete Boson job queue
+
+	# deactivate and delete Boson compute environment
+
+	# delete AWS credentials
+
+}
 
 
 
