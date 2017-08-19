@@ -140,7 +140,7 @@ MonitorJobStatus = function (job.ids, print.job.status = c('summary', 'detailed'
 
 
 CreateBatchComputeEnvironment = function (
-  comp.env.name = 'boson-batch',
+  comp.env.name = 'boson-comp-env',
   instance.types = c("m4.large"),
   min.vcpus = 0,
   max.vcpus = 2,
@@ -149,7 +149,7 @@ CreateBatchComputeEnvironment = function (
   subnets,
   security.group.ids
 ) {
-  out = system2('aws', c(
+  system2('aws', c(
     'batch', 'create-compute-environment',
     '--compute-environment-name', comp.env.name,
     '--type', 'MANAGED',
@@ -165,10 +165,22 @@ CreateBatchComputeEnvironment = function (
       ',instanceRole="ecsInstanceRole"'
       ),
     '--service-role', service.role.arn
-    ),
-    stdout = TRUE
+    )
   )
-  print(out)
+
+  # wait till up
+  flag = TRUE
+  while (flag) {
+    out = system2('aws', c(
+        'batch', 'describe-compute-environments',
+        '--compute-environments', comp.env.name
+      ),
+      stdout = TRUE
+    )
+    # print(paste(out, collapse = ''))
+    flag = ! grepl(comp.env.name, paste(out, collapse = ''))
+    Sys.sleep(1)
+  }
 }
 # CreateBatchComputeEnvironment (
 #   service.role.arn = "arn:aws:iam::757968107665:role/BosonBatch",
@@ -181,15 +193,27 @@ DeleteBatchComputeEnvironment = function (
   comp.env.name = 'boson-comp-env'
 ) {
   # disable
-  system2('aws', c(
+  out = system2('aws', c(
     'batch', 'update-compute-environment',
     '--compute-environment', comp.env.name,
     '--state', 'DISABLED'
-    )
+    ),
+    stdout = T
   )
 
-  # wait 10 seconds
-  Sys.sleep(10)
+  # wait till disabled
+  flag = TRUE
+  while (flag) {
+    out = system2('aws', c(
+        'batch', 'describe-compute-environments',
+        '--compute-environments', comp.env.name
+      ),
+      stdout = TRUE
+    )
+    # print(paste(out, collapse = ''))
+    flag = grepl('ENABLED', paste(out, collapse = ''))
+    Sys.sleep(1)
+  }
 
   # delete
   system2('aws', c(
@@ -198,7 +222,7 @@ DeleteBatchComputeEnvironment = function (
     )
   )
 }
-# DeleteBatchComputeEnvironment()
+DeleteBatchComputeEnvironment()
 
 
 CreateJobQueue = function (
