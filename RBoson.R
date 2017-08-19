@@ -17,6 +17,7 @@ source('AWSBatchUtils.R')
 #' @param security.group.ids security.group.ids from AWS VPC; required
 #' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
 #' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
+#' @export
 BosonSetup = function (
 	comp.env.name = 'boson-comp-env',
 	instance.types = c("m4.large"),
@@ -30,13 +31,62 @@ BosonSetup = function (
 	job.definition.name = 'boson-job-definition'
 ) {
 	# create a compute-environment for Boson
+  CreateBatchComputeEnvironment (
+    comp.env.name = comp.env.name,
+    instance.types = instance.types,
+    min.vcpus = min.vcpus,
+    max.vcpus = max.vcpus,
+    initial.vcpus = initial.vcpus,
+    service.role.arn = service.role.arn,
+    subnets = subnets,
+    security.group.ids = security.group.ids
+  )
 
 	# create a job queue for Boson
+  CreateJobQueue (
+    job.queue.name = job.queue.name,
+    comp.env.name = comp.env.name
+  )
 
 	# register a job-definition for Boson
-
+  RegisterBosonbJobDefinition (
+    job.definition.name = job.definition.name
+  )
 }
+# BosonSetup (
+#   service.role.arn = "arn:aws:iam::757968107665:role/BosonBatch",
+#   subnets = c("subnet-1a69d77d","subnet-4da19315","subnet-abfc2ce2"),
+#   security.group.ids = "sg-ddd562a7"
+# )
 
+#' Cleaup the environment setup earlier for Boson
+#' 
+#' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
+#' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
+#' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
+#' @export
+BosonCleanup = function (
+  comp.env.name = 'boson-comp-env',
+  job.queue.name = 'boson-job-queue',
+  job.definition.name = 'boson-job-definition'
+) {
+  
+  # deregister a job-definition for Boson
+  DeregisterBosonbJobDefinition (
+    job.definition.name = job.definition.name
+  )
+  
+  # delete the job queue for Boson
+  DeleteJobQueue (
+    job.queue.name = job.queue.name
+  )
+  
+  # delete the compute-environment for Boson
+  DeleteBatchComputeEnvironment (
+    comp.env.name = comp.env.name
+  )
+}
+# BosonCleanup()
 
 SubmitBosonTasks = function (
 	X,

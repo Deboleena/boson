@@ -178,7 +178,7 @@ CreateBatchComputeEnvironment = function (
       stdout = TRUE
     )
     # print(paste(out, collapse = ''))
-    flag = ! grepl(comp.env.name, paste(out, collapse = ''))
+    flag = ! (grepl(comp.env.name, paste(out, collapse = '')) && grepl('ENABLED', paste(out, collapse = '')))
     Sys.sleep(1)
   }
 }
@@ -222,7 +222,7 @@ DeleteBatchComputeEnvironment = function (
     )
   )
 }
-DeleteBatchComputeEnvironment()
+# DeleteBatchComputeEnvironment()
 
 
 CreateJobQueue = function (
@@ -237,8 +237,22 @@ CreateJobQueue = function (
     '--compute-environment-order', paste0('order=1,computeEnvironment=',comp.env.name)
     )
   )
+
+  # wait till up
+  flag = TRUE
+  while (flag) {
+    out = system2('aws', c(
+        'batch', 'describe-job-queues',
+        '--job-queues', job.queue.name
+      ),
+      stdout = TRUE
+    )
+    # print(paste(out, collapse = ''))
+    flag = ! (grepl(job.queue.name, paste(out, collapse = '')) && grepl('ENABLED', paste(out, collapse = '')))
+    Sys.sleep(1)
+  }
 }
-# CreateJobQueue()
+# CreateJobQueue(job.queue.name = 'boson-queue-2', comp.env.name = 'boson-5')
 
 
 DeleteJobQueue = function (
@@ -252,8 +266,19 @@ DeleteJobQueue = function (
     )
   )
 
-  # wait 10 seconds
-  Sys.sleep(10)
+  # wait till disabled
+  flag = TRUE
+  while (flag) {
+    out = system2('aws', c(
+        'batch', 'describe-job-queues',
+        '--job-queues', job.queue.name
+      ),
+      stdout = TRUE
+    )
+    # print(paste(out, collapse = ''))
+    flag = grepl('ENABLED', paste(out, collapse = ''))
+    Sys.sleep(1)
+  }
 
   # delete
   system2('aws', c(
@@ -262,18 +287,20 @@ DeleteJobQueue = function (
     )
   )
 }
-# DeleteJobQueue()
+# DeleteJobQueue(job.queue.name = 'boson-queue-2')
 
 
 RegisterBosonbJobDefinition = function (
-  job.definition.name = 'boson-job-definition'
+  job.definition.name = 'boson-job-definition',
+  vcpus = 1,
+  memory = 1024
 ) {
   system2('aws', c(
     'batch', 'register-job-definition',
     '--job-definition-name', job.definition.name,
     '--type','container',
     '--container-properties', paste0(
-        '\'{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest"}\''
+        '\'{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": ', vcpus,', "memory": ', memory,'}\''
       )
     )
   )
@@ -291,7 +318,7 @@ DeregisterBosonbJobDefinition = function (
     )
   )
 }
-# DeregisterBosonbJobDefinition(revision.id = 1)
+# DeregisterBosonbJobDefinition(revision.id = 3)
 
 # DeleteBatchLogs = function () {
 #   system2('aws', c('logs', 'delete-log-group', '--log-group-name', '/aws/batch/job'))
