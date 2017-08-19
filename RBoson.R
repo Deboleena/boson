@@ -5,6 +5,18 @@
 source('s3utils.R')
 source('AWSBatchUtils.R')
 
+#' Setup an environment for executing tasks in parallel using Boson
+#'
+#' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
+#' @param instance.types what type of EC2 instance to attach to the Compute Environment; default is 'm4.large'
+#' @param min.vcpus minimum number of vcpus to maintain in the Compute Environment; default valus is 0
+#' @param max.vcpus maximum number of vcpus to maintain in the Compute Environment; default valus is 2
+#' @param initial.vcpus number of vcpus initially attached to the Compute Environment; default valus is 2
+#' @param service.role.arn ARN of a role created in AWS IAM with the following policies attached: AmazonS3FullAccess, AWSBatchServiceRole, AWSBatchFullAccess; required
+#' @param subnets subnets from AWS VPC; required
+#' @param security.group.ids security.group.ids from AWS VPC; required
+#' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
+#' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
 
 BosonSetup = function (
 	comp.env.name = 'boson-comp-env',
@@ -16,9 +28,7 @@ BosonSetup = function (
 	subnets,
 	security.group.ids,
 	job.queue.name = 'boson-job-queue',
-	job.definition.name = 'boson-job-definition',
-	vcpus = 1,
-  	memory = 1024
+	job.definition.name = 'boson-job-definition'
 ) {
 	# create a compute-environment for Boson
 

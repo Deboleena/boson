@@ -149,7 +149,7 @@ CreateBatchComputeEnvironment = function (
   subnets,
   security.group.ids
 ) {
-  system2('aws', c(
+  out = system2('aws', c(
     'batch', 'create-compute-environment',
     '--compute-environment-name', comp.env.name,
     '--type', 'MANAGED',
@@ -165,8 +165,10 @@ CreateBatchComputeEnvironment = function (
       ',instanceRole="ecsInstanceRole"'
       ),
     '--service-role', service.role.arn
-    )
+    ),
+    stdout = TRUE
   )
+  print(out)
 }
 # CreateBatchComputeEnvironment (
 #   service.role.arn = "arn:aws:iam::757968107665:role/BosonBatch",
@@ -240,16 +242,14 @@ DeleteJobQueue = function (
 
 
 RegisterBosonbJobDefinition = function (
-  job.definition.name = 'boson-job-definition',
-  vcpus = 1,
-  memory = 1024
+  job.definition.name = 'boson-job-definition'
 ) {
   system2('aws', c(
     'batch', 'register-job-definition',
     '--job-definition-name', job.definition.name,
     '--type','container',
     '--container-properties', paste0(
-        '\'{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest", "vcpus": ', vcpus,', "memory": ', memory,'}\''
+        '\'{"image": "757968107665.dkr.ecr.us-west-2.amazonaws.com/boson-docker-image:latest"}\''
       )
     )
   )
