@@ -17,7 +17,6 @@ source('AWSBatchUtils.R')
 #' @param security.group.ids security.group.ids from AWS VPC; required
 #' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
 #' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
-
 BosonSetup = function (
 	comp.env.name = 'boson-comp-env',
 	instance.types = c("m4.large"),
