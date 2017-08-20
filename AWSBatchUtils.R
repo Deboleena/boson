@@ -3,11 +3,23 @@
 
 require(jsonlite)
 
+#' Submit a job to either bootstrap more jobs or solve tasks
+#' 
+#'  @param batch.id batch id; required
+#'  @param job.type job type, can be 'bootstrap-r-jobs' or 'run-r-tasks'; default value is 'bootstrap-r-jobs'
+#'  @param njobs if job.type = 'bootstrap-r-jobs', number of AWS Batch jobs to spawn for solving all parallel tasks; required
+#'  @param s3.path path to an S3 folder; required
+#'  @param job.id job.type = 'run-r-tasks', the job id; default value is '0'
+#'  @param task.ids job.type = 'run-r-tasks', the task ids to solve as one job; default value is '0'
+#'  @param job.name name of the Batch job; default value is 'boson-job'
+#'  @param job.queue name of the job queue to use; default value is 'boson-job-queue'
+#'  @param job.definition name of the job.definition; default value is 'boson-batch-job'
+#'  @param region AWS region; default value is 'us-west-2'
 SubmitBatchJob = function (
   batch.id,
+  job.type = c('bootstrap-r-jobs', 'run-r-tasks'),
   njobs,
   s3.path,
-  job.type = 'bootstrap-r-jobs',
   job.id = 0,
   task.ids = '0',
   job.name = 'boson-job',
@@ -25,7 +37,7 @@ SubmitBatchJob = function (
                      '\'{"command":["sh","driver.sh","',
                      region,
                      '","', batch.id,
-                     '","', job.type,
+                     '","', job.type[1],
                      '","', njobs,
                      '","', job.id,
                      '","', task.ids,
@@ -65,7 +77,16 @@ SubmitBatchJob = function (
 #   job.definition = 'boson-batch-job', 
 #   region = 'us-west-2'))
 
-
+#' Bootstrap jobs
+#' 
+#'  @param batch.id batch id; required
+#'  @param ntasks number of tasks to solve; required
+#'  @param njobs number of AWS Batch jobs to spawn for solving all parallel tasks; required
+#'  @param s3.path path to an S3 folder; required
+#'  @param job.name name of the Batch job; default value is 'boson-job'
+#'  @param job.queue name of the job queue to use; default value is 'boson-job-queue'
+#'  @param job.definition name of the job.definition; default value is 'boson-batch-job'
+#'  @param region AWS region; default value is 'us-west-2'
 BootstrapBatchJobs = function (
   batch.id,
   ntasks,
@@ -118,13 +139,19 @@ BootstrapBatchJobs = function (
 #   )
 # )
 
+
+#' Monitor status of AWS Batch jobs
+#' 
+#' @param job.ids vector of job-ids; required
+#' @param ping frequency of printing job status in seconds; default is every 10 seconds
+#' @param print.job.status level of details in printing job status; default value is 'summary'
 MonitorJobStatus = function (job.ids, print.job.status = c('summary', 'detailed', 'none')) {
   out = system2('aws', c('batch', 'describe-jobs',
                          '--jobs', paste(job.ids, collapse = ' ')),
                 stdout = TRUE
                 )
   
-  df = fromJSON(paste(out, collapse = ''))[[1]][, c('jobId', 'status')]
+  df = jsonlite::fromJSON(paste(out, collapse = ''))[[1]][, c('jobId', 'status')]
   if (print.job.status[1] == 'summary') {
     cat(paste0(format(Sys.time()), ' - '))
     tab = table(df$status)
@@ -138,7 +165,16 @@ MonitorJobStatus = function (job.ids, print.job.status = c('summary', 'detailed'
 }
 # print(MonitorJobStatus(c('ee10c476-2bfe-4ae6-bdad-f54146ba84fc', 'a45c7e5f-91c1-487c-9a6d-0d1d6ab313c6'), print.job.status = 'none'))
 
-
+#' Create a AWS Batch Compute Environment
+#' 
+#' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
+#' @param instance.types what type of EC2 instance to attach to the Compute Environment; default is 'm4.large'
+#' @param min.vcpus minimum number of vcpus to maintain in the Compute Environment; default valus is 0
+#' @param max.vcpus maximum number of vcpus to maintain in the Compute Environment; default valus is 2
+#' @param initial.vcpus number of vcpus initially attached to the Compute Environment; default valus is 2
+#' @param service.role.arn ARN of a role created in AWS IAM with the following policies attached: AmazonS3FullAccess, AWSBatchServiceRole, AWSBatchFullAccess; required
+#' @param subnets subnets from AWS VPC; required
+#' @param security.group.ids security.group.ids from AWS VPC; required
 CreateBatchComputeEnvironment = function (
   comp.env.name = 'boson-comp-env',
   instance.types = c("m4.large"),
@@ -188,7 +224,9 @@ CreateBatchComputeEnvironment = function (
 #   security.group.ids = "sg-ddd562a7"
 # )
 
-
+#' Delete a AWS Batch Compute Environment
+#' 
+#' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
 DeleteBatchComputeEnvironment = function (
   comp.env.name = 'boson-comp-env'
 ) {
@@ -224,7 +262,10 @@ DeleteBatchComputeEnvironment = function (
 }
 # DeleteBatchComputeEnvironment()
 
-
+#' Create a AWS Batch Job Queue
+#' 
+#' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
+#' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
 CreateJobQueue = function (
   job.queue.name = 'boson-job-queue',
   comp.env.name = 'boson-comp-env'
@@ -254,7 +295,9 @@ CreateJobQueue = function (
 }
 # CreateJobQueue(job.queue.name = 'boson-queue-2', comp.env.name = 'boson-5')
 
-
+#' Delete a AWS Batch Job Queue
+#' 
+#' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
 DeleteJobQueue = function (
   job.queue.name = 'boson-job-queue'
 ) {
@@ -289,8 +332,12 @@ DeleteJobQueue = function (
 }
 # DeleteJobQueue(job.queue.name = 'boson-queue-2')
 
-
-RegisterBosonbJobDefinition = function (
+#' Register a AWS Batcj Job Definition
+#' 
+#' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
+#' @param vcpus number of vcpus to assign for solving job; default value is 1
+#' @param memory memory in mb to assign for solving job; default value is 1024
+RegisterBosonJobDefinition = function (
   job.definition.name = 'boson-job-definition',
   vcpus = 1,
   memory = 1024
@@ -305,10 +352,12 @@ RegisterBosonbJobDefinition = function (
     )
   )
 }
-# RegisterBosonbJobDefinition()
+# RegisterBosonJobDefinition()
 
-
-DeregisterBosonbJobDefinition = function (
+#' Deregister a AWS Batcj Job Definition
+#' 
+#' @param job.definition.name name if the AWS Job Definition; default is 'boson-job-definition'
+DeregisterBosonJobDefinition = function (
   job.definition.name = 'boson-job-definition',
   revision.id = 1
 ) {
@@ -318,9 +367,5 @@ DeregisterBosonbJobDefinition = function (
     )
   )
 }
-# DeregisterBosonbJobDefinition(revision.id = 3)
+# DeregisterBosonJobDefinition(revision.id = 3)
 
-# DeleteBatchLogs = function () {
-#   system2('aws', c('logs', 'delete-log-group', '--log-group-name', '/aws/batch/job'))
-# }
-# DeleteBatchLogs()

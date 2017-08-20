@@ -5,6 +5,7 @@
 source('s3utils.R')
 source('AWSBatchUtils.R')
 
+
 #' Setup an environment for executing tasks in parallel using Boson
 #'
 #' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
@@ -49,7 +50,7 @@ BosonSetup = function (
   )
 
 	# register a job-definition for Boson
-  RegisterBosonbJobDefinition (
+  RegisterBosonJobDefinition (
     job.definition.name = job.definition.name
   )
 }
@@ -59,7 +60,8 @@ BosonSetup = function (
 #   security.group.ids = "sg-ddd562a7"
 # )
 
-#' Cleaup the environment setup earlier for Boson
+
+#' Cleaup a Boson environment
 #' 
 #' @param comp.env.name name of the AWS Batch Compute Environment; default is 'boson-comp-env'
 #' @param job.queue.name name of the AWS Job Queue; default is 'boson-job-queue'
@@ -72,7 +74,7 @@ BosonCleanup = function (
 ) {
   
   # deregister a job-definition for Boson
-  DeregisterBosonbJobDefinition (
+  DeregisterBosonJobDefinition (
     job.definition.name = job.definition.name
   )
   
@@ -88,6 +90,26 @@ BosonCleanup = function (
 }
 # BosonCleanup()
 
+
+#'  Submit parallel tasks for batch execution using Boson
+#'  
+#'  @param X a list of named lists collecting argument tuples of FUN; required
+#'  @param FUN a function that solves one parallel task in the batch when run with one argument tuple in X; required
+#'  @param ... common arguments shared by all tasks used by FUN; optional
+#'  @param njobs number of AWS Batch jobs to spawn for solving all parallel tasks; required
+#'  @param s3.bucket an S3 bucket where intermediate files can be stored in sub-folders; required
+#'  @param batch.id batch id; default value is NULL, which yields automatic calculation of the batch id
+#'  @param s3.path path to an S3 folder; default value is NULL, which causes s3.path to be automatically set by s3.bucket and batch.id
+#'  @param bootstarp.agent whetehr to use local R or AWS Batch for bootstrapping jobs; default value is 'localR'
+#'  @param job.name name of the Batch job; default value is 'boson-job'
+#'  @param job.queue name of the job queue to use; default value is 'boson-job-queue'
+#'  @param job.definition name of the job.definition; default value is 'boson-batch-job'
+#'  @param region AWS region; default value is 'us-west-2'
+#'  @param blocking.call boolean, whether to make SubmitBosonTasks() a blocking call; default value is TRUE
+#'  @param ping if blocking.call = TRUE, frequency of printing job status in seconds; default is every 10 seconds
+#'  @param print.job.status if blocking.call = TRUE, level of details in printing job status; default value is 'summary'
+#'  
+#'  @export
 SubmitBosonTasks = function (
 	X,
 	FUN,
@@ -98,12 +120,12 @@ SubmitBosonTasks = function (
 	s3.path = NULL,
 	bootstarp.agent = c('localR', 'awsBatch'),
 	job.name = 'boson-job',
-    job.queue = 'boson-job-queue',
-    job.definition = 'boson-batch-job',
-    region = 'us-west-2',
-    ping = 10,
-    blocking.call = FALSE,
-    print.job.status = c('summary', 'detailed', 'none')
+  job.queue = 'boson-job-queue',
+  job.definition = 'boson-batch-job',
+  region = 'us-west-2',
+	blocking.call = TRUE,
+  ping = 10,
+  print.job.status = c('summary', 'detailed', 'none')
 ) {
 
 	# create a new batch.id
@@ -188,11 +210,29 @@ SubmitBosonTasks = function (
 	} else {
 		return ( df.jobid )
 	}
-
 }
+# BosonTask = log
+# BosonParams = as.list(1:10)
+# out = SubmitBosonTasks (
+#   X = BosonParams,
+#   FUN = BosonTask,
+#   njobs = 2,
+#   s3.bucket = 's3://boson-base/',
+#   # batch.id = 0,
+#   # bootstarp.agent = 'awsBatch',
+#   ping = 2,
+#   blocking.call = TRUE
+#   # print.job.status = 'detailed'
+# )
+# print(out)
 
 
-
+#' Wait until specified jobs are finished
+#' 
+#' @param job.ids vector of job-ids; required
+#' @param ping frequency of printing job status in seconds; default is every 10 seconds
+#' @param print.job.status level of details in printing job status; default value is 'summary'
+#' @export
 WaitForJobsToFinish = function (job.ids, ping = 10, print.job.status = c('summary', 'detailed', 'none')) {
   df.monitor = MonitorJobStatus(job.ids, print.job.status = print.job.status)
   while (!all(df.monitor$status %in% c('SUCCEEDED', 'FAILED'))) {
@@ -202,7 +242,12 @@ WaitForJobsToFinish = function (job.ids, ping = 10, print.job.status = c('summar
 }
 
 
-
+#' Fetch outcomes of jobs submitted as a Boson batch
+#' 
+#' @param batch.id bacth.id; required
+#' @param njobs number of jobs submitted with the batch.id; required
+#' @param s3.bucket S3 bucket where intermediate files can be stored in sub-folders; required
+#' @param s3.path path to an S3 folder; default value is NULL, which causes s3.path to be automatically set by s3.bucket and batch.id
 FetchBatchOutcomes = function (batch.id, njobs, s3.bucket, s3.path = NULL) {
   if (is.null(s3.path)) {
     if (substr(s3.bucket, nchar(s3.bucket), nchar(s3.bucket)) == '/') {
@@ -226,7 +271,11 @@ FetchBatchOutcomes = function (batch.id, njobs, s3.bucket, s3.path = NULL) {
 # 	)
 # )
 
-
+#' Cleanup AWS resources used by a Batch
+#' 
+#' @param batch.id batch id; required
+#' @param s3.bucket S3 bucket where intermediate files can be stored in sub-folders; required
+#' @param s3.path path to an S3 folder; default value is NULL, which causes s3.path to be automatically set by s3.bucket and batch.id
 BatchCleanup = function (batch.id, s3.bucket, s3.path = NULL) {
 	if (is.null(s3.path)) {
 		if (substr(s3.bucket, nchar(s3.bucket), nchar(s3.bucket)) == '/') {
@@ -237,33 +286,3 @@ BatchCleanup = function (batch.id, s3.bucket, s3.path = NULL) {
 	S3DeleteFolder(s3.path)
 }
 
-
-BosonClenaup = function (
-) {
-	# deregister Boson job definitions
-
-	# deactivate and delete Boson job queue
-
-	# deactivate and delete Boson compute environment
-
-	# delete AWS credentials
-
-}
-
-
-
-# run
-BosonTask = log
-BosonParams = as.list(1:10)
-out = SubmitBosonTasks(
-	X = BosonParams,
-	FUN = BosonTask,
-	njobs = 2,
-	s3.bucket = 's3://boson-base/',
-	# batch.id = 0,
-	# bootstarp.agent = 'awsBatch',
-	ping = 2,
-	blocking.call = TRUE
-	# print.job.status = 'detailed'
-)
-print(out)
