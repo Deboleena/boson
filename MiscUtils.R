@@ -1,7 +1,13 @@
 # Miscellaneous utility functions for RBOSON
 
-
 #' Configure AWS-CLI
+#' 
+#' @param aws.access.key.id aws.access.key.id; required
+#' @param aws.secret.access.key aws.secret.access.key; required
+#' @param aws.region aws.region; defalut value is 'us-west-2'
+#' @param output.format output format; defalute value is 'json'
+#' @param profile; default value is 'boson'
+#' @export
 AWSConfigure = function (
   aws.access.key.id,
   aws.secret.access.key,
@@ -57,4 +63,3 @@ AWSConfigure = function (
 # )
 
 
-CreateBatchComputeEnvironment
