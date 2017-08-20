@@ -18,21 +18,7 @@ JOBID=$5
 TASKIDS=$6
 S3_PATH=$7
 
-# if [ "$JOBTYPE" == "bootstrap-r-jobs" ]; then
-# 	echo "bootstrapping $NJOBS jobs"
-
-# 	for i in $(seq 1 $NJOBS)
-# 	do
-# 		echo "submitting job $i in the job-queue"
-# 		aws batch submit-job --job-name boson-job --job-queue boson-job-queue --job-definition boson-batch-job --container-overrides "{\"command\":[\"sh\",\"driver.sh\",\"$AWS_DEFAULT_REGION\",\"$BATCHID\",\"run-r-job-in-queue\",\"$NJOBS\",\"$i\",\"$S3_PATH\"]}"
-# 	done
-# elif [ "$JOBTYPE" == "run-r-job-in-queue" ]; then
-# 	echo "running job $JOBID"
-
-# 	# run jobs
-# 	Rscript BosonJobMaster.R $BATCHID $JOBID $S3_PATH
-# fi
-
+# call BosonJobMaster with appropriate parameters
 if [ "$JOBTYPE" == "bootstrap-r-jobs" ] || [ "$JOBTYPE" == "run-r-tasks" ]; then
 
 	Rscript BosonJobMaster.R $BATCHID $JOBTYPE $NJOBS $JOBID $TASKIDS $S3_PATH

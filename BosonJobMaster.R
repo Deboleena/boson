@@ -1,6 +1,5 @@
 # BosonJobMaster.R
 # run: Rscript BosonJobMaster.R 0 bootstrap-r-jobs 2 0 0 s3://boson-base/rboson-test/
-
 # run: Rscript BosonJobMaster.R 0 run-r-tasks 1 1 1 s3://boson-base/rboson-test/
 # run: Rscript BosonJobMaster.R 0 run-r-tasks 1 1 1,2,3,4,5 s3://boson-base/rboson-test/
 
@@ -76,6 +75,4 @@ if (job.type == 'bootstrap-r-jobs') {
   )
   
 }
-
-
 
