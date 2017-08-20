@@ -1,6 +1,7 @@
 # S3 Utility functions for RBOSON
 # run: Rscript s3utils.R
 
+
 #' Create a folder in S3
 #' 
 #' @param s3path path to an S3 directory
@@ -67,7 +68,6 @@ S3CopyFiles = function (source = NULL, destination, files, supressWarnings = FAL
 # )
 
 
-
 #' Delete files from S3
 #' 
 #' @param s3path path to an S3 directory
@@ -107,6 +107,7 @@ S3CreateBucket = function (bucket) {
 }
 # print(S3CreateBucket(bucket = 's3://cm-tmp-3186876'))
 
+
 #' Delete a bucket in S3
 #' 
 #' @param bucket name of the bucket to be deleted
@@ -122,7 +123,12 @@ S3DeleteBucket = function (bucket) {
 }
 # print(S3DeleteBucket(bucket = 's3://cm-tmp-3186876'))
 
-#' Saves R-objects as Rdata in an S3 folder
+
+#' Save R-objects as Rdata in an S3 folder
+#' 
+#' @param ... R objects to be saved
+#' @param s3.path path to an S3 folder; required
+#' @param key key to name the saved file; requied
 SaveObjectesInS3 = function (..., s3.path, key) {
   robjs = list(...)
   if (length(robjs) == 1 && is.list(robjs[[1]])) {
@@ -137,6 +143,11 @@ SaveObjectesInS3 = function (..., s3.path, key) {
 # SaveObjectesInS3(a = rnorm(100), s3.path = 's3://boson-base/rboson-test/', key = 'rnorm')
 
 
+#' Load R-objects from Rdata in an S3 folder
+#' 
+#' @param s3.path path to an S3 folder; required
+#' @param keys keys to find saved file; requied
+#' @param supressWarnings boolean, suppress R warnings; default value is FALSE
 LoadObjectsFromS3 = function (s3.path, keys, supressWarnings = FALSE) {
   out.all = list()
   tmp.env = new.env()
