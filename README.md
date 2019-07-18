@@ -1,3 +1,4 @@
 # boson
-Developing Libraries for Distributed Computing in R and Python on the Cloud
-Deboleena Mukhopadhyay
+#### Distributed Computing in R and Python on AWS cloud.
+
+Deboleena Mukhopadhyay, Chiranjit Mukherjee
